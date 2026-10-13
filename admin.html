@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Panel</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+  :root{--primary:#0b3d91;--accent:#1d4ed8;--bg:#f5f8ff;--bg-alt:#eaf1ff;--text:#0f172a;--muted:#64748b;--border:#dbe4f0;--danger:#dc2626;--success:#16a34a;--radius:12px;--font:'Inter',system-ui,sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font);color:var(--text);background:var(--bg);min-height:100vh}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  input,textarea,select{font-family:inherit}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:50px;font-weight:600;font-size:.9rem;transition:all .15s;cursor:pointer}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:#082b68}
+  .btn-success{background:var(--success);color:#fff}
+  .btn-danger{background:var(--danger);color:#fff}
+  .btn-ghost{background:var(--bg-alt);color:var(--primary)}
+  .btn-sm{padding:7px 14px;font-size:.8rem}
+  .btn-block{width:100%}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+
+  .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0b3d91,#1d4ed8)}
+  .login-card{background:#fff;border-radius:16px;padding:40px 32px;max-width:400px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+  .login-card h2{text-align:center;color:var(--primary);margin-bottom:6px}
+  .login-card p{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:24px}
+  .login-icon{width:60px;height:60px;border-radius:14px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 20px}
+
+  .form-group{margin-bottom:16px}
+  .form-group label{display:block;font-weight:600;font-size:.82rem;margin-bottom:6px}
+  .form-group input,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:.92rem;background:#fff;outline:none;transition:border .15s}
+  .form-group input:focus,.form-group textarea:focus{border-color:var(--primary)}
+  .form-group textarea{resize:vertical;min-height:80px;font-family:inherit}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+
+  #dashboard{display:none}
+  .topbar{background:var(--primary);color:#fff;padding:14px 0;position:sticky;top:0;z-index:100}
+  .topbar-inner{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .topbar h1{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+  .topbar-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .topbar-actions .btn{background:rgba(255,255,255,.15);color:#fff;padding:7px 14px;font-size:.82rem}
+  .topbar-actions .btn:hover{background:rgba(255,255,255,.28)}
+
+  .shell{display:grid;grid-template-columns:230px 1fr;gap:20px;max-width:1200px;margin:20px auto;padding:0 20px}
+  .side{background:#fff;border-radius:var(--radius);padding:16px 10px;height:fit-content;position:sticky;top:80px;border:1px solid var(--border)}
+  .side h3{font-size:.7rem;text-transform:uppercase;color:var(--muted);letter-spacing:1px;padding:0 12px;margin:8px 0;font-weight:700}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;font-weight:500;font-size:.88rem;cursor:pointer;transition:all .15s;margin-bottom:2px}
+  .nav-item:hover{background:var(--bg-alt);color:var(--primary)}
+  .nav-item.active{background:var(--primary);color:#fff}
+  .nav-item i{width:18px;text-align:center}
+
+  .panel{display:none}
+  .panel.active{display:block}
+  .card{background:#fff;border-radius:var(--radius);padding:22px;border:1px solid var(--border);margin-bottom:18px}
+  .card h3{font-size:1.05rem;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+
+  .item-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:#fafcff;flex-wrap:wrap}
+  .item-thumb{width:56px;height:56px;border-radius:8px;background:var(--bg-alt);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;background-size:cover;background-position:center}
+  .item-info{flex:1;min-width:160px}
+  .item-info h4{font-size:.92rem;color:var(--primary);margin-bottom:3px}
+  .item-info p{font-size:.78rem;color:var(--muted)}
+  .item-actions{display:flex;gap:5px;flex-wrap:wrap}
+  .badge{display:inline-block;padding:2px 8px;border-radius:50px;font-size:.68rem;font-weight:600;text-transform:uppercase}
+  .badge-pending{background:#fef3c7;color:#92400e}
+  .badge-approved{background:#dcfce7;color:#166534}
+
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
+  .modal.show{display:flex}
+  .modal-content{background:#fff;border-radius:14px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto}
+  .modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:2}
+  .modal-header h3{font-size:1.05rem;color:var(--primary)}
+  .modal-close{width:34px;height:34px;border-radius:50%;background:var(--bg-alt);color:var(--muted);display:flex;align-items:center;justify-content:center}
+  .modal-body{padding:20px}
+  .modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+  #toast{position:fixed;bottom:20px;right:20px;background:var(--primary);color:#fff;padding:12px 18px;border-radius:10px;font-weight:500;font-size:.9rem;transform:translateY(150%);transition:transform .3s;z-index:2000;max-width:340px;display:flex;align-items:center;gap:8px}
+  #toast.show{transform:translateY(0)}
+  #toast.error{background:var(--danger)}
+  #toast.success{background:var(--success)}
+
+  .file-upload{border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;display:block;transition:all .15s;background:#fafcff}
+  .file-upload:hover{border-color:var(--primary);background:var(--bg-alt)}
+  .file-upload i{font-size:1.3rem;color:var(--accent);margin-bottom:5px;display:block}
+  .file-upload span{font-size:.82rem;color:var(--muted)}
+  .file-upload input{display:none}
+  .file-preview{margin-top:8px;font-size:.78rem;color:var(--success);font-weight:600}
+
+  .empty{text-align:center;padding:32px;color:var(--muted)}
+  .empty i{font-size:2rem;margin-bottom:10px;opacity:.4;display:block}
+
+  .progress-bar{width:100%;height:4px;background:var(--bg-alt);border-radius:10px;overflow:hidden;margin-top:8px;display:none}
+  .progress-bar.show{display:block}
+  .progress-fill{height:100%;background:var(--accent);width:0;transition:width .2s}
+
+  .hidden{display:none!important}
+  @media (max-width:800px){.shell{grid-template-columns:1fr;padding:0 14px}.side{position:static}}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-icon"><i class="fas fa-user-shield"></i></div>
+    <h2>Admin's Panel</h2>
+    <p></p>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" required />
+      </div>
+      <div class="form-group">
+        <label>Password (min 6 chars)</label>
+        <input type="password" id="loginPassword" minlength="6" required />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+        <i class="fas fa-sign-in-alt"></i> Sign In
+      </button>
+    </form>
+  </div>
+</div>
+
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <h1><i class="fas fa-sliders-h"></i> Admin Dashboard</h1>
+      <div class="topbar-actions">
+        <a href="index.html" target="_blank" class="btn"><i class="fas fa-globe"></i> View Site</a>
+        <button class="btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <aside class="side">
+      <h3>Management</h3>
+      <div class="nav-item active" data-panel="panel-projects"><i class="fas fa-folder"></i> Projects</div>
+      <div class="nav-item" data-panel="panel-services"><i class="fas fa-cogs"></i> Services</div>
+      <div class="nav-item" data-panel="panel-content"><i class="fas fa-edit"></i> Site Content</div>
+      <div class="nav-item" data-panel="panel-branding"><i class="fas fa-palette"></i> Branding</div>
+      <div class="nav-item" data-panel="panel-contact"><i class="fas fa-address-book"></i> Contact</div>
+      <div class="nav-item" data-panel="panel-backup"><i class="fas fa-database"></i> Backup</div>
+    </aside>
+
+    <div>
+      <!-- PROJECTS -->
+      <div class="panel active" id="panel-projects">
+        <div class="card">
+          <h3><i class="fas fa-folder"></i> Projects</h3>
+          <button class="btn btn-primary btn-sm" id="openAddProject" style="margin-bottom:14px">
+            <i class="fas fa-plus"></i> Add Project
+          </button>
+          <div id="adminProjectsList"></div>
+        </div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="panel" id="panel-services">
+        <div class="card">
+          <h3><i class="fas fa-plus"></i> Add Service</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>Icon class</label><input type="text" id="svcIcon" value="fas fa-cog" /></div>
+            <div class="form-group"><label>Title</label><input type="text" id="svcTitle" /></div>
+          </div>
+          <div class="form-group"><label>Description</label><textarea id="svcDesc"></textarea></div>
+          <button class="btn btn-success btn-sm" id="addServiceBtn"><i class="fas fa-plus"></i> Add</button>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-list"></i> Services</h3>
+          <div id="adminServicesList"></div>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="panel" id="panel-content">
+        <div class="card">
+          <h3><i class="fas fa-heading"></i> Hero</h3>
+          <div class="form-group"><label>Heading</label><input type="text" id="contentHeroHeading" /></div>
+          <div class="form-group"><label>Subtext</label><textarea id="contentHeroSubtext"></textarea></div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-info-circle"></i> About</h3>
+          <div class="form-group"><label>About Text</label><textarea id="contentAbout" rows="4"></textarea></div>
+        </div>
+        <button class="btn btn-primary" id="saveContentBtn"><i class="fas fa-save"></i> Save Content</button>
+      </div>
+
+      <!-- BRANDING -->
+      <div class="panel" id="panel-branding">
+        <div class="card">
+          <h3><i class="fas fa-palette"></i> Branding</h3>
+          <div class="form-group"><label>Company Name</label><input type="text" id="brandCompanyName" /></div>
+          <div class="form-group">
+            <label>Logo</label>
+            <label class="file-upload" for="brandLogoFile">
+              <i class="fas fa-upload"></i>
+              <span>Click to upload logo</span>
+              <input type="file" id="brandLogoFile" accept="image/*" />
+            </label>
+            <div class="file-preview hidden" id="brandLogoPreview"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>Primary</label><input type="color" id="brandPrimaryColor" value="#0b3d91" /></div>
+            <div class="form-group"><label>Accent</label><input type="color" id="brandAccentColor" value="#1d4ed8" /></div>
+          </div>
+          <button class="btn btn-primary" id="saveBrandingBtn"><i class="fas fa-save"></i> Save Branding</button>
+        </div>
+      </div>
+
+      <!-- CONTACT -->
+      <div class="panel" id="panel-contact">
+        <div class="card">
+          <h3><i class="fas fa-address-book"></i> Contact</h3>
+          <div class="form-grid">
+            <div class="form-group"><label>Email</label><input type="email" id="contactEmail" /></div>
+            <div class="form-group"><label>Phone</label><input type="text" id="contactPhone" /></div>
+            <div class="form-group"><label>WhatsApp (digits)</label><input type="text" id="contactWhatsapp" /></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-share-alt"></i> Social</h3>
+          <div class="form-group"><label>TikTok</label><input type="url" id="socialTiktok" /></div>
+          <div class="form-group"><label>Instagram</label><input type="url" id="socialInstagram" /></div>
+          <div class="form-group"><label>X (Twitter)</label><input type="url" id="socialX" /></div>
+          <div class="form-group"><label>Facebook</label><input type="url" id="socialFacebook" /></div>
+          <button class="btn btn-primary" id="saveContactBtn"><i class="fas fa-save"></i> Save Contact</button>
+        </div>
+      </div>
+
+      <!-- BACKUP -->
+      <div class="panel" id="panel-backup">
+        <div class="card">
+          <h3><i class="fas fa-download"></i> Backup</h3>
+          <button class="btn btn-primary" id="backupBtn"><i class="fas fa-download"></i> Download JSON</button>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-upload"></i> Restore</h3>
+          <label class="file-upload" for="restoreFile">
+            <i class="fas fa-upload"></i>
+            <span>Click to select backup file</span>
+            <input type="file" id="restoreFile" accept=".json" />
+          </label>
+          <div class="file-preview hidden" id="restoreFilePreview"></div>
+          <button class="btn btn-success" id="restoreBtn" style="margin-top:10px"><i class="fas fa-undo"></i> Restore</button>
+        </div>
+        <div class="card">
+          <h3 style="color:var(--danger)"><i class="fas fa-exclamation-triangle"></i> Reset</h3>
+          <button class="btn btn-danger" id="resetBtn"><i class="fas fa-trash"></i> Reset Everything</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Project Modal -->
+<div class="modal" id="projectModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add Project</h3>
+      <button class="modal-close" onclick="document.getElementById('projectModal').classList.remove('show')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="projId" />
+      <div class="form-group"><label>Name *</label><input type="text" id="projName" /></div>
+      <div class="form-group"><label>Category</label><input type="text" id="projCategory" placeholder="Web, Mobile, Cloud" /></div>
+      <div class="form-group"><label>Description *</label><textarea id="projDesc"></textarea></div>
+      <div class="form-group"><label>Features (comma separated)</label><input type="text" id="projFeatures" /></div>
+      <div class="form-group"><label>Live URL (optional)</label><input type="url" id="projLiveUrl" /></div>
+      <div class="form-group">
+        <label>Image (auto-compressed to &lt; 100KB)</label>
+        <label class="file-upload" for="projImageFile">
+          <i class="fas fa-image"></i>
+          <span>Click to upload image</span>
+          <input type="file" id="projImageFile" accept="image/*" />
+        </label>
+        <div class="file-preview hidden" id="projImagePreview"></div>
+      </div>
+      <div class="form-group">
+        <label>HTML file (optional, max 400KB)</label>
+        <label class="file-upload" for="projHtmlFile">
+          <i class="fas fa-file-code"></i>
+          <span>Click to upload .html</span>
+          <input type="file" id="projHtmlFile" accept=".html" />
+        </label>
+        <div class="file-preview hidden" id="projHtmlPreview"></div>
+      </div>
+      <div class="form-group">
+        <label>Download file (optional, max 400KB)</label>
+        <label class="file-upload" for="projDownloadFile">
+          <i class="fas fa-file-arrow-down"></i>
+          <span>Click to upload file</span>
+          <input type="file" id="projDownloadFile" />
+        </label>
+        <div class="file-preview hidden" id="projDownloadPreview"></div>
+      </div>
+      <div class="progress-bar" id="saveProgress"><div class="progress-fill" id="saveProgressFill"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('projectModal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-primary" id="saveProjectBtn"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><i class="fas fa-info-circle"></i> <span id="toastMsg"></span></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ⚠️ PASTE YOUR REAL CONFIG HERE */
+const firebaseConfig = {
+  apiKey: "AIzaSyDWIRnnToLpXjnP-UIOvtsWxO-Oo-pXqFg",
+  authDomain: "cornel1.firebaseapp.com",
+  projectId: "cornel1",
+  storageBucket: "cornel1.firebasestorage.app",
+  messagingSenderId: "851139384552",
+  appId: "1:851139384552:web:cdc7c25f914f4dae23a55d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const DEFAULT_SITE = {
+  branding: { companyName: "Cornelius & Associates", logoUrl: "", primaryColor: "#0b3d91", accentColor: "#1d4ed8" },
+  content: {
+    heroHeading: "Modern Software for Modern Business",
+    heroSubtext: "We design, build, and deliver high-quality applications.",
+    about: "Cornelius & Associates is a professional software development studio."
+  },
+  contact: {
+    email: "hello@corneliussoft.com",
+    phone: "+1 (555) 123-4567",
+    whatsapp: "15551234567",
+    social: { tiktok: "", instagram: "", x: "", facebook: "" }
+  },
+  services: [
+    { icon: "fas fa-code", title: "Web Development", description: "Custom web applications." },
+    { icon: "fas fa-mobile-alt", title: "Mobile Apps", description: "iOS and Android apps." }
+  ]
+};
+
+let state = {
+  site: JSON.parse(JSON.stringify(DEFAULT_SITE)),
+  projects: [],
+  pendingImage: null,
+  pendingHtml: null,
+  pendingDownload: null,
+  pendingLogo: null
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+
+function toast(msg, type="info"){
+  const t = $("#toast"), i = t.querySelector("i");
+  t.className = "";
+  if (type==="success"){ t.classList.add("success"); i.className="fas fa-check-circle"; }
+  else if (type==="error"){ t.classList.add("error"); i.className="fas fa-exclamation-circle"; }
+  else i.className="fas fa-info-circle";
+  $("#toastMsg").textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove("show"), 3200);
+}
+
+function fileToDataURL(f){
+  return new Promise((res, rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(f);
+  });
+}
+
+function approxBytes(dataUrl){
+  const i = dataUrl.indexOf(",");
+  return i < 0 ? dataUrl.length : Math.floor((dataUrl.length - i - 1) * 0.75);
+}
+function fmtBytes(b){
+  if (b < 1024) return b + " B";
+  if (b < 1048576) return (b/1024).toFixed(1) + " KB";
+  return (b/1048576).toFixed(2) + " MB";
+}
+
+/* AGGRESSIVE compression — 500px max, 60KB target for projects */
+async function compressImage(file, maxDim=500, targetBytes=60*1024){
+  const dataUrl = await fileToDataURL(file);
+  const img = await new Promise((res, rej)=>{
+    const i = new Image();
+    i.onload = ()=>res(i);
+    i.onerror = rej;
+    i.src = dataUrl;
+  });
+
+  let w = img.width, h = img.height;
+  if (w > maxDim || h > maxDim){
+    const r = Math.min(maxDim/w, maxDim/h);
+    w = Math.round(w*r); h = Math.round(h*r);
+  }
+
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+
+  let q = 0.8;
+  let out = c.toDataURL("image/jpeg", q);
+  while (approxBytes(out) > targetBytes && q > 0.3){
+    q -= 0.1;
+    out = c.toDataURL("image/jpeg", q);
+  }
+  // If still big, shrink further
+  let scale = 0.8;
+  while (approxBytes(out) > targetBytes && w > 200){
+    w = Math.round(w*scale); h = Math.round(h*scale);
+    c.width = w; c.height = h;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    out = c.toDataURL("image/jpeg", 0.6);
+    scale -= 0.1;
+  }
+  return out;
+}
+
+/* ---------- Firestore helpers ---------- */
+async function loadSite(){
+  try{
+    const snap = await getDoc(doc(db,"site","content"));
+    if (snap.exists()){
+      const d = snap.data();
+      state.site = {
+        branding: {...DEFAULT_SITE.branding, ...(d.branding||{})},
+        content: {...DEFAULT_SITE.content, ...(d.content||{})},
+        contact: {...DEFAULT_SITE.contact, ...(d.contact||{}), social: {...DEFAULT_SITE.contact.social, ...((d.contact && d.contact.social)||{})}},
+        services: Array.isArray(d.services) ? d.services : DEFAULT_SITE.services
+      };
+    } else {
+      await setDoc(doc(db,"site","content"), DEFAULT_SITE);
+    }
+  }catch(e){ console.warn("loadSite:", e); }
+  populateForms();
+}
+
+async function saveSite(){
+  try{
+    const size = new Blob([JSON.stringify(state.site)]).size;
+    if (size > 900*1024){ toast("Site too big — smaller logo needed", "error"); return false; }
+    await setDoc(doc(db,"site","content"), state.site);
+    toast("Saved", "success");
+    return true;
+  }catch(e){ toast("Save failed: " + e.message, "error"); return false; }
+}
+
+async function loadProjects(){
+  let snap;
+  try{
+    snap = await getDocs(query(collection(db,"projects"), orderBy("createdAt","desc")));
+  }catch(e){
+    console.warn("orderBy failed, using plain fetch");
+    snap = await getDocs(collection(db,"projects"));
+  }
+  state.projects = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderProjects();
+}
+
+function renderProjects(){
+  const wrap = $("#adminProjectsList");
+  if (!state.projects.length){
+    wrap.innerHTML = `<div class="empty"><i class="fas fa-folder-open"></i><p>No projects yet.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = state.projects.map(p=>{
+    const thumb = p.imageData ? `background-image:url('${p.imageData}')` : "";
+    return `
+      <div class="item-row">
+        <div class="item-thumb" style="${thumb}">${!p.imageData?'<i class="fas fa-image"></i>':''}</div>
+        <div class="item-info">
+          <h4>${esc(p.name)}</h4>
+          <p>${esc(p.category||"—")} · <span class="badge badge-${p.approved?'approved':'pending'}">${p.approved?'Approved':'Pending'}</span></p>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-${p.approved?'ghost':'success'} btn-sm" data-toggle="${p.id}"><i class="fas fa-${p.approved?'eye-slash':'check'}"></i></button>
+          <button class="btn btn-ghost btn-sm" data-edit="${p.id}"><i class="fas fa-pen"></i></button>
+          <button class="btn btn-danger btn-sm" data-del="${p.id}"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+  }).join("");
+  wrap.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openModal(b.dataset.edit));
+  wrap.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>delProject(b.dataset.del));
+  wrap.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=()=>toggleApprove(b.dataset.toggle));
+}
+
+function renderServices(){
+  const wrap = $("#adminServicesList");
+  if (!state.site.services.length){
+    wrap.innerHTML = `<div class="empty"><i class="fas fa-cogs"></i><p>No services.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = state.site.services.map((s,i)=>`
+    <div class="item-row">
+      <div class="item-thumb"><i class="${esc(s.icon)}" style="font-size:1.2rem;color:var(--accent)"></i></div>
+      <div class="item-info"><h4>${esc(s.title)}</h4><p>${esc(s.description)}</p></div>
+      <div class="item-actions"><button class="btn btn-danger btn-sm" data-rm="${i}"><i class="fas fa-trash"></i></button></div>
+    </div>`).join("");
+  wrap.querySelectorAll("[data-rm]").forEach(b=>{
+    b.onclick = ()=>{
+      if (!confirm("Delete this service?")) return;
+      state.site.services.splice(+b.dataset.rm, 1);
+      saveSite().then(ok=>{ if(ok) renderServices(); });
+    };
+  });
+}
+
+function populateForms(){
+  const b = state.site.branding, c = state.site.content, ct = state.site.contact;
+  $("#contentHeroHeading").value = c.heroHeading;
+  $("#contentHeroSubtext").value = c.heroSubtext;
+  $("#contentAbout").value = c.about;
+  $("#brandCompanyName").value = b.companyName;
+  $("#brandPrimaryColor").value = b.primaryColor;
+  $("#brandAccentColor").value = b.accentColor;
+  $("#contactEmail").value = ct.email;
+  $("#contactPhone").value = ct.phone;
+  $("#contactWhatsapp").value = ct.whatsapp;
+  $("#socialTiktok").value = ct.social.tiktok||"";
+  $("#socialInstagram").value = ct.social.instagram||"";
+  $("#socialX").value = ct.social.x||"";
+  $("#socialFacebook").value = ct.social.facebook||"";
+  renderServices();
+}
+
+/* ---------- Auth ---------- */
+onAuthStateChanged(auth, async user=>{
+  if (user){
+    $("#loginScreen").style.display = "none";
+    $("#dashboard").style.display = "block";
+    try {
+      await loadSite();
+      await loadProjects();
+    } catch(e){ console.error("Load error:", e); }
+  } else {
+    $("#loginScreen").style.display = "flex";
+    $("#dashboard").style.display = "none";
+  }
+});
+
+$("#loginForm").onsubmit = async e=>{
+  e.preventDefault();
+  const email = $("#loginEmail").value.trim();
+  const pw = $("#loginPassword").value;
+  if (pw.length < 6){ toast("Password min 6 chars", "error"); return; }
+  const btn = $("#loginBtn");
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+  try{
+    await signInWithEmailAndPassword(auth, email, pw);
+    toast("Welcome", "success");
+    $("#loginForm").reset();
+  }catch(err){
+    let msg = err.message;
+    if (err.code==="auth/user-not-found") msg="No account found";
+    else if (err.code==="auth/wrong-password" || err.code==="auth/invalid-credential") msg="Wrong email or password";
+    else if (err.code==="auth/invalid-email") msg="Invalid email format";
+    toast(msg, "error");
+  }finally{
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+  }
+};
+
+$("#logoutBtn").onclick = async ()=>{
+  if (!confirm("Sign out?")) return;
+  await signOut(auth);
+};
+
+/* ---------- Navigation ---------- */
+document.querySelectorAll(".nav-item[data-panel]").forEach(item=>{
+  item.onclick = ()=>{
+    document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active"));
+    item.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    $("#"+item.dataset.panel).classList.add("active");
+  };
+});
+
+/* ---------- Save content/branding/contact ---------- */
+$("#saveContentBtn").onclick = async ()=>{
+  state.site.content.heroHeading = $("#contentHeroHeading").value.trim();
+  state.site.content.heroSubtext = $("#contentHeroSubtext").value.trim();
+  state.site.content.about = $("#contentAbout").value.trim();
+  await saveSite();
+};
+
+$("#saveBrandingBtn").onclick = async ()=>{
+  state.site.branding.companyName = $("#brandCompanyName").value.trim()||"Company";
+  state.site.branding.primaryColor = $("#brandPrimaryColor").value;
+  state.site.branding.accentColor = $("#brandAccentColor").value;
+  if (state.pendingLogo){
+    state.site.branding.logoUrl = state.pendingLogo;
+    state.pendingLogo = null;
+    $("#brandLogoPreview").classList.add("hidden");
+  }
+  await saveSite();
+};
+
+$("#brandLogoFile").onchange = async e=>{
+  const f = e.target.files[0]; if (!f) return;
+  toast("Compressing...");
+  const comp = await compressImage(f, 200, 40*1024);
+  state.pendingLogo = comp;
+  const p = $("#brandLogoPreview"); p.classList.remove("hidden");
+  p.innerHTML = `<i class="fas fa-check"></i> ${esc(f.name)} → ${fmtBytes(approxBytes(comp))}`;
+};
+
+$("#saveContactBtn").onclick = async ()=>{
+  state.site.contact.email = $("#contactEmail").value.trim();
+  state.site.contact.phone = $("#contactPhone").value.trim();
+  state.site.contact.whatsapp = $("#contactWhatsapp").value.trim();
+  state.site.contact.social = {
+    tiktok: $("#socialTiktok").value.trim(),
+    instagram: $("#socialInstagram").value.trim(),
+    x: $("#socialX").value.trim(),
+    facebook: $("#socialFacebook").value.trim()
+  };
+  await saveSite();
+};
+
+$("#addServiceBtn").onclick = async ()=>{
+  const icon = $("#svcIcon").value.trim()||"fas fa-cog";
+  const title = $("#svcTitle").value.trim();
+  const desc = $("#svcDesc").value.trim();
+  if (!title||!desc) return toast("Title and description required", "error");
+  state.site.services.push({icon, title, description: desc});
+  if (await saveSite()){
+    $("#svcTitle").value=""; $("#svcDesc").value="";
+    renderServices();
+  }
+};
+
+/* ---------- Project Modal ---------- */
+function openModal(id){
+  state.pendingImage = null;
+  state.pendingHtml = null;
+  state.pendingDownload = null;
+  ["projImageFile","projHtmlFile","projDownloadFile"].forEach(x=>$("#"+x).value="");
+  ["projImagePreview","projHtmlPreview","projDownloadPreview"].forEach(x=>$("#"+x).classList.add("hidden"));
+
+  if (id){
+    const p = state.projects.find(x=>x.id===id); if (!p) return;
+    $("#modalTitle").textContent = "Edit Project";
+    $("#projId").value = p.id;
+    $("#projName").value = p.name||"";
+    $("#projCategory").value = p.category||"";
+    $("#projDesc").value = p.description||"";
+    $("#projFeatures").value = (p.features||[]).join(", ");
+    $("#projLiveUrl").value = p.liveUrl||"";
+  } else {
+    $("#modalTitle").textContent = "Add Project";
+    $("#projId").value = "";
+    ["projName","projCategory","projDesc","projFeatures","projLiveUrl"].forEach(x=>$("#"+x).value="");
+  }
+  $("#projectModal").classList.add("show");
+}
+$("#openAddProject").onclick = ()=>openModal(null);
+
+$("#projImageFile").onchange = async e=>{
+  const f = e.target.files[0]; if (!f) return;
+  toast("Compressing image...");
+  const comp = await compressImage(f, 500, 60*1024);
+  state.pendingImage = comp;
+  const p = $("#projImagePreview"); p.classList.remove("hidden");
+  p.innerHTML = `<i class="fas fa-check"></i> ${esc(f.name)} → ${fmtBytes(approxBytes(comp))}`;
+};
+
+$("#projHtmlFile").onchange = async e=>{
+  const f = e.target.files[0]; if (!f) return;
+  if (f.size > 400*1024){ toast("HTML max 400KB", "error"); e.target.value=""; return; }
+  state.pendingHtml = await fileToDataURL(f);
+  const p = $("#projHtmlPreview"); p.classList.remove("hidden");
+  p.innerHTML = `<i class="fas fa-check"></i> ${esc(f.name)} (${fmtBytes(f.size)})`;
+};
+
+$("#projDownloadFile").onchange = async e=>{
+  const f = e.target.files[0]; if (!f) return;
+  if (f.size > 400*1024){ toast("File max 400KB", "error"); e.target.value=""; return; }
+  state.pendingDownload = { dataUrl: await fileToDataURL(f), name: f.name };
+  const p = $("#projDownloadPreview"); p.classList.remove("hidden");
+  p.innerHTML = `<i class="fas fa-check"></i> ${esc(f.name)} (${fmtBytes(f.size)})`;
+};
+
+/* ---------- SAVE PROJECT — THE CRITICAL FUNCTION ---------- */
+$("#saveProjectBtn").onclick = async ()=>{
+  const name = $("#projName").value.trim();
+  const desc = $("#projDesc").value.trim();
+  if (!name||!desc) return toast("Name and description required", "error");
+
+  const btn = $("#saveProjectBtn");
+  const progress = $("#saveProgress"), fill = $("#saveProgressFill");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  progress.classList.add("show");
+  fill.style.width = "30%";
+
+  const t0 = performance.now();
+
+  try{
+    const id = $("#projId").value;
+    const existing = id ? state.projects.find(p=>p.id===id) : null;
+
+    // Build the small doc — everything we KNOW is present
+    const data = {
+      name,
+      category: $("#projCategory").value.trim(),
+      description: desc,
+      features: $("#projFeatures").value.split(",").map(s=>s.trim()).filter(Boolean),
+      liveUrl: $("#projLiveUrl").value.trim(),
+      updatedAt: serverTimestamp()
+    };
+
+    // Image
+    if (state.pendingImage) data.imageData = state.pendingImage;
+    else if (existing) data.imageData = existing.imageData || "";
+
+    // HTML
+    if (state.pendingHtml) data.htmlData = state.pendingHtml;
+    else if (existing) data.htmlData = existing.htmlData || "";
+
+    // Download
+    if (state.pendingDownload){
+      data.downloadData = state.pendingDownload.dataUrl;
+      data.downloadName = state.pendingDownload.name;
+    } else if (existing){
+      data.downloadData = existing.downloadData || "";
+      data.downloadName = existing.downloadName || "";
+    }
+
+    data.approved = existing ? (existing.approved || false) : false;
+
+    // Size check
+    const size = new Blob([JSON.stringify(data)]).size;
+    if (size > 900*1024){
+      toast(`Too large (${fmtBytes(size)}). Try a smaller image.`, "error");
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Save';
+      progress.classList.remove("show");
+      return;
+    }
+
+    fill.style.width = "60%";
+    console.log("[SAVE] Writing to Firestore, doc size:", fmtBytes(size));
+
+    if (existing){
+      await updateDoc(doc(db,"projects",id), data);
+    } else {
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db,"projects"), data);
+    }
+
+    fill.style.width = "100%";
+    const elapsed = Math.round(performance.now() - t0);
+    console.log("[SAVE] Done in", elapsed, "ms");
+    toast(`Saved in ${elapsed}ms`, "success");
+    $("#projectModal").classList.remove("show");
+    setTimeout(()=>{ progress.classList.remove("show"); fill.style.width = "0"; }, 500);
+    loadProjects(); // fire and forget
+  }catch(e){
+    console.error("[SAVE] FAILED:", e);
+    toast("Save failed: " + e.message, "error");
+    progress.classList.remove("show");
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> Save';
+  }
+};
+
+async function delProject(id){
+  if (!confirm("Delete this project?")) return;
+  await deleteDoc(doc(db,"projects",id));
+  toast("Deleted", "success");
+  loadProjects();
+}
+
+async function toggleApprove(id){
+  const p = state.projects.find(x=>x.id===id); if (!p) return;
+  await updateDoc(doc(db,"projects",id), {approved: !p.approved});
+  toast(!p.approved?"Approved":"Unpublished", "success");
+  loadProjects();
+}
+
+/* ---------- Backup ---------- */
+$("#backupBtn").onclick = ()=>{
+  const data = { site: state.site, projects: state.projects, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `backup-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Backup downloaded", "success");
+};
+
+$("#restoreFile").onchange = e=>{
+  const f = e.target.files[0]; if (!f) return;
+  const p = $("#restoreFilePreview"); p.classList.remove("hidden");
+  p.innerHTML = `<i class="fas fa-check"></i> ${esc(f.name)}`;
+};
+
+$("#restoreBtn").onclick = async ()=>{
+  const f = $("#restoreFile").files[0];
+  if (!f) return toast("Select a file", "error");
+  if (!confirm("Restore? This overwrites site content.")) return;
+  try{
+    const data = JSON.parse(await f.text());
+    if (data.site){
+      state.site = {
+        branding: {...DEFAULT_SITE.branding, ...(data.site.branding||{})},
+        content: {...DEFAULT_SITE.content, ...(data.site.content||{})},
+        contact: {...DEFAULT_SITE.contact, ...(data.site.contact||{}), social: {...DEFAULT_SITE.contact.social, ...((data.site.contact&&data.site.contact.social)||{})}},
+        services: Array.isArray(data.site.services) ? data.site.services : DEFAULT_SITE.services
+      };
+      await saveSite();
+    }
+    if (Array.isArray(data.projects)){
+      for (const p of data.projects){
+        const { id, ...rest } = p;
+        await addDoc(collection(db,"projects"), {...rest, approved: p.approved||false, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+      }
+      await loadProjects();
+    }
+    populateForms();
+    toast("Restored", "success");
+  }catch(e){ toast("Restore failed: " + e.message, "error"); }
+};
+
+$("#resetBtn").onclick = async ()=>{
+  if (!confirm("Delete ALL projects and reset site content?")) return;
+  if (!confirm("Final confirm?")) return;
+  await setDoc(doc(db,"site","content"), DEFAULT_SITE);
+  state.site = JSON.parse(JSON.stringify(DEFAULT_SITE));
+  const snap = await getDocs(collection(db,"projects"));
+  for (const d of snap.docs) await deleteDoc(d.ref);
+  await loadProjects();
+  populateForms();
+  toast("Reset complete", "success");
+};
+</script>
+</body>
+</html>
